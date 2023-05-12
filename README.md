@@ -1,1 +1,1 @@
-# Unleashing the-Power of GANs to Create Realistic Images
+# Generating Realistic Images with Generative Adversarial Network
