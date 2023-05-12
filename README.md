@@ -1,1 +1,1 @@
-# Generating Realistic Images with Generative Adversarial Network
+# Generating Realistic Face Images with Generative Adversarial Network
