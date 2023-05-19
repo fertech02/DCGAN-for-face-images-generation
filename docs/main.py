@@ -17,7 +17,7 @@ def normalize_images(images):
             normalized_images.append(normalized_image)
     return normalized_images
 
-# Normalized Dataset
+# Normalized Datasettt
 normalized_dataset = normalize_images("data/img_align_celeba/img_align_celeba")
 
 if len(normalized_dataset) > 0:
