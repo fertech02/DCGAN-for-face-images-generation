@@ -1,36 +1,33 @@
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+from torch.utils.data import random_split
 
-from sklearn.model_selection import train_test_split
-import numpy as np
-import cv2
-import os
+BATCH_SIZE = 128 #number of samples processed at time
+IMAGE_SIZE = 64 #size of each image 
+CHANNELS_IMG = 3 #number of channels in a rgb image
 
-#Normalize the images
-def normalize_images(images):
-    normalized_images = []
-    for i in os.listdir(images):
-        image = cv2.imread(images+'/'+i)
-        #Convert all the images in a range (0-1)
-        image = image.astype(np.float32)
-        normalized_image = image / 255.0
-        normalized_images.append(normalized_image)
-    return normalized_images
 
-normalized_dataset = normalize_images("data/img_align_celeba/img_align_celeba")
+transforms = transforms.Compose(
+    [
+        transforms.Resize(IMAGE_SIZE),
+        transforms.ToTensor(),
+        transforms.Normalize(
+            [0.5 for i in range(CHANNELS_IMG)], [0.5 for i in range(CHANNELS_IMG)])
+    ]
+)
 
-#Shuffle and Split the dataset
-train_data, val_test_data = train_test_split(normalized_dataset,test_size=0.2,random_state=42)
-val_data, test_data = train_test_split(val_test_data, test_size=0.5,random_state=42)
+#Load and preprocess the dataset
+dataset = datasets.ImageFolder(root="data/img_align_celeba",transform=transforms)
 
-#Batches Creation
-batch_size = 32
+#Split the dataset
+train_size = int(0.7*len(dataset)) #size of the training set
+val_size = int(0.15*len(dataset)) #size of the validation set
+test_size = len(dataset) - train_size - val_size #size of the test set
 
-def create_batches(data, batch_s):
-    indices = np.arange(len(data))
-    for start_idx in range(0,len(data),batch_s):
-        end_idx = min(start_idx + batch_s, len(data))
-        batch_indices = indices[start_idx:end_idx]
-        batch = data[batch_indices]
-        yield batch
+#Create the subsets
+train_data, val_data, test_data = random_split(dataset, [train_size, val_size, test_size])
 
-train_batches = create_batches(train_data,batch_size)
-val_batches = create_batches(val_data,batch_size)
+#Create a dataloader for each subsets
+train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
+val_loader = DataLoader(val_data, batch_size=BATCH_SIZE, shuffle=False)
+test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=False)
