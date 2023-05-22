@@ -1,6 +1,4 @@
-import torch
 from torch import nn
-from preprocess import CHANNELS_IMG
 
 class Discriminator(nn.Module):
     """

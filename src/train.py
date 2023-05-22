@@ -1,9 +1,13 @@
+import os
+import torch
+import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
-import torch
 import torch.optim as optim
-from preprocess import data_loader
-from preprocess import BATCH_SIZE,IMAGE_SIZE,CHANNELS_IMG
+from torch import Tensor
+from torch.autograd import Variable
+from torchvision.utils import save_image
+from preprocess import data_loader,BATCH_SIZE,CHANNELS_IMG
 from generator import Generator
 from discriminator import Discriminator
 
@@ -35,12 +39,37 @@ optimizer_d = optim.Adam(discriminator.parameters(),lr=LEARNING_RATE,betas=(0.5,
 
 for epoch in range(NUM_EPOCHS):
     for batch_idx, (images,_) in enumerate(data_loader):
+
         images = images.to(device)
+        real_labels = torch.ones_like(Tensor(BATCH_SIZE, 1)) #labels for real imgs
+        fake_labels = torch.zeros_like(Tensor(BATCH_SIZE, 1)) #labels for fake imgs
+        real_imgs = Variable(images.type(Tensor))
+
         #-------------------------------------------------------
         #   Train Generator: max log(D(G(z)))
         #-------------------------------------------------------
 
+        optimizer_g.zero_grad() 
+        z = Variable(Tensor(np.random.normal(0, 1, (BATCH_SIZE, Z_DIM)))) #noise vector
+        g_images = generator(z) #generate a batch of images
+        g_loss = adversarial_loss(discriminator(g_images), real_labels) #generator loss
+        g_loss.backward()
+        optimizer_g.step()
+
         #--------------------------------------------------------
         #   Train Discriminator: max log(D(x)) + log(1 - D(G(z)))
         #--------------------------------------------------------
+
+        optimizer_d.zero_grad() 
+        real_loss = adversarial_loss(discriminator(real_imgs), real_labels)
+        fake_loss = adversarial_loss(discriminator(g_images.detach()), fake_labels) 
+        d_loss = real_loss + fake_loss #discriminator loss
+        d_loss.backward()
+        optimizer_d.step()
+
+        if epoch == 10 or epoch % 50 == 0:
+            os.mkdir(f"../results/{epoch} epochs")
+            save_image(g_images.detach()[:20],f"../results/{epoch} epochs",nrow=5, normalize=True)
+            
+
 
