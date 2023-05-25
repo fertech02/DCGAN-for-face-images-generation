@@ -18,7 +18,7 @@ FEATURES_G = 64
 FEATURES_D = 64
 
 #Binary Cross Entropy Loss function
-adversarial_loss = nn.BCELoss()
+loss = nn.BCELoss()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -37,7 +37,7 @@ optimizer_d = optim.Adam(discriminator.parameters(),lr=LEARNING_RATE,betas=(0.5,
 """
 
 for epoch in range(NUM_EPOCHS):
-    for batch_idx, (images,_) in enumerate(data_loader):
+    for idx, (images,_) in enumerate(data_loader):
 
         images = images.to(device)
         real_labels = torch.ones_like(Tensor(BATCH_SIZE, 1)) #labels for real imgs
@@ -49,9 +49,9 @@ for epoch in range(NUM_EPOCHS):
         #-------------------------------------------------------
 
         optimizer_g.zero_grad() 
-        z = torch.randn(BATCH_SIZE, Z_DIM) #noise vector
+        z = Variable(Tensor(np.random.normal(0, 1, (BATCH_SIZE, Z_DIM, 1, 1)))) #noise vector
         g_images = generator(z) #generate a batch of images
-        g_loss = adversarial_loss(discriminator(g_images), real_labels) #generator loss
+        g_loss = loss(discriminator(g_images), real_labels) #generator loss
         g_loss.backward()
         optimizer_g.step()
 
@@ -60,8 +60,8 @@ for epoch in range(NUM_EPOCHS):
         #--------------------------------------------------------
 
         optimizer_d.zero_grad() 
-        real_loss = adversarial_loss(discriminator(real_imgs), real_labels)
-        fake_loss = adversarial_loss(discriminator(g_images.detach()), fake_labels) 
+        real_loss = loss(discriminator(real_imgs), real_labels)
+        fake_loss = loss(discriminator(g_images.detach()), fake_labels) 
         d_loss = real_loss + fake_loss #discriminator loss
         d_loss.backward()
         optimizer_d.step()

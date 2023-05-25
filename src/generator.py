@@ -29,7 +29,7 @@ class Generator(nn.Module):
             nn.ReLU(),
         )
     
-    def forward(self, z):
-        return self.z
+    def forward(self, x):
+        return self.gen(x)
 
 
