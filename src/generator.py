@@ -2,7 +2,7 @@ from torch import nn
 
 class Generator(nn.Module):
     """
-    
+        
     """
     def __init__(self, z_dim, channels_img, features_g):
         super(Generator, self).__init__() 
@@ -28,7 +28,9 @@ class Generator(nn.Module):
             nn.ReLU(),
         )
     
-    def forward(self, x):
-        return self.gen(x)
+    def forward(self, z):
+        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
+        img = self.generator_block(out)
+        return img
 
 

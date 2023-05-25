@@ -49,7 +49,7 @@ for epoch in range(NUM_EPOCHS):
         #-------------------------------------------------------
 
         optimizer_g.zero_grad() 
-        z = Variable(Tensor(np.random.normal(0, 1, (BATCH_SIZE, Z_DIM)))) #noise vector
+        z = torch.randn(BATCH_SIZE, Z_DIM) #noise vector
         g_images = generator(z) #generate a batch of images
         g_loss = adversarial_loss(discriminator(g_images), real_labels) #generator loss
         g_loss.backward()
