@@ -1,3 +1,4 @@
+import torch
 from torch import nn
 
 class Generator(nn.Module):
@@ -29,8 +30,6 @@ class Generator(nn.Module):
         )
     
     def forward(self, z):
-        out = out.view(out.shape[0], 128, self.init_size, self.init_size)
-        img = self.generator_block(out)
-        return img
+        return self.z
 
 
