@@ -15,8 +15,8 @@ transforms = transforms.Compose(
 )
 
 #Preprocess the dataset
-dataset = datasets.ImageFolder(root="data/img_align_celeba",transform=transforms)
+dataset = datasets.ImageFolder(root="/content/DCGAN-for-face-images-generation/data/img_align_celeba",transform=transforms)
 
 #Create a dataloader
-data_loader = DataLoader(dataset,batch_size=BATCH_SIZE,shuffle=True)
+data_loader = DataLoader(dataset,batch_size=BATCH_SIZE,shuffle=True, drop_last=True)
 

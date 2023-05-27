@@ -1,6 +1,6 @@
 import os
 import torch
-import numpy as np
+import numpy as nn
 import torch.nn as nn
 import torch.optim as optim
 from torch import Tensor
@@ -18,7 +18,7 @@ FEATURES_G = 64
 FEATURES_D = 64
 
 #Binary Cross Entropy Loss function
-loss = nn.BCELoss()
+adversarial_loss = nn.BCELoss()
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -36,23 +36,24 @@ optimizer_d = optim.Adam(discriminator.parameters(),lr=LEARNING_RATE,betas=(0.5,
 
 """
 
-for epoch in range(NUM_EPOCHS):
-    for idx, (images,_) in enumerate(data_loader):
+for epoch in range(3):
+    for batch_idx, (images,_) in enumerate(data_loader):
 
         images = images.to(device)
-        real_labels = torch.ones_like(Tensor(BATCH_SIZE, 1)) #labels for real imgs
-        fake_labels = torch.zeros_like(Tensor(BATCH_SIZE, 1)) #labels for fake imgs
-        real_imgs = Variable(images.type(Tensor))
+        real_labels = torch.ones_like(Tensor(BATCH_SIZE, 1)).to(device) #labels for real imgs
+        fake_labels = torch.zeros_like(Tensor(BATCH_SIZE, 1)).to(device) #labels for fake imgs
+        real_imgs = Variable(images.type(Tensor)).to(device)
 
         #-------------------------------------------------------
         #   Train Generator: max log(D(G(z)))
         #-------------------------------------------------------
 
         optimizer_g.zero_grad() 
-        z = Variable(Tensor(np.random.normal(0, 1, (BATCH_SIZE, Z_DIM, 1, 1)))) #noise vector
-        g_images = generator(z) #generate a batch of images
-        g_loss = loss(discriminator(g_images), real_labels) #generator loss
-        g_loss.backward()
+        noise_vector = torch.randn(BATCH_SIZE,Z_DIM).to(device)
+        noise_vector = noise_vector.unsqueeze(-1).unsqueeze(-1)
+        g_images = generator(noise_vector) #generate a batch of images
+        g_loss = adversarial_loss(discriminator(g_images.detach()).squeeze(-1).squeeze(-1), real_labels).to(device) #generator loss
+        g_loss.backward(retain_graph=True)
         optimizer_g.step()
 
         #--------------------------------------------------------
@@ -60,15 +61,21 @@ for epoch in range(NUM_EPOCHS):
         #--------------------------------------------------------
 
         optimizer_d.zero_grad() 
-        real_loss = loss(discriminator(real_imgs), real_labels)
-        fake_loss = loss(discriminator(g_images.detach()), fake_labels) 
+        real_loss = adversarial_loss(discriminator(real_imgs).squeeze().unsqueeze(-1), real_labels)
+        fake_loss = adversarial_loss(discriminator(g_images.detach()).squeeze().unsqueeze(-1), fake_labels) 
         d_loss = real_loss + fake_loss #discriminator loss
         d_loss.backward()
         optimizer_d.step()
 
-        if epoch == 10 or epoch % 50 == 0:
-            os.mkdir(f"../results/{epoch} epochs")
-            save_image(g_images.detach()[:20],f"../results/{epoch} epochs",nrow=5, normalize=True)
+        if epoch != 0 and (epoch == 10 or epoch % 50 == 0):
+            path_to_save = f"/content/DCGAN-for-face-images-generation/results/{epoch} epochs"
+            try:
+              os.makedirs(path_to_save)
+            except FileExistsError:
+              pass
+            for i, image_tensor in enumerate(g_images[-25::]):
+                save_image(image_tensor, os.path.join(path_to_save, f'image_{i}.png'))
+            save_image(g_images[:25], os.path.join(path_to_save, 'grid.png'), nrow=8, normalize=True)
             
 
 
