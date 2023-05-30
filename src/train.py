@@ -12,7 +12,7 @@ from discriminator import Discriminator
 
 
 Z_DIM = 100 #dimension of the noise vector
-NUM_EPOCHS  = 200 
+NUM_EPOCHS  = 50 
 LEARNING_RATE = 2e-4 #Adam learning rate
 FEATURES_G = 64
 FEATURES_D = 64
@@ -20,11 +20,23 @@ FEATURES_D = 64
 #Binary Cross Entropy Loss function
 adversarial_loss = nn.BCELoss()
 
+def weights_init_normal(m):
+    classname = m.__class__.__name__
+    if classname.find("Conv") != -1:
+        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
+    elif classname.find("BatchNorm2d") != -1:
+        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
+        torch.nn.init.constant_(m.bias.data, 0.0)
+    
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 #Initialize generator and discriminator
 generator = Generator(Z_DIM,CHANNELS_IMG,FEATURES_G).to(device)
 discriminator = Discriminator(CHANNELS_IMG,FEATURES_D).to(device)
+
+#Initialize weights
+generator.apply(weights_init_normal)
+discriminator.apply(weights_init_normal)
 
 #Initialize optimizers for Generator and Discriminator
 optimizer_g = optim.Adam(generator.parameters(),lr=LEARNING_RATE,betas=(0.5,0.999))
@@ -36,7 +48,7 @@ optimizer_d = optim.Adam(discriminator.parameters(),lr=LEARNING_RATE,betas=(0.5,
 
 """
 
-for epoch in range(3):
+for epoch in range(NUM_EPOCHS+1):
     for batch_idx, (images,_) in enumerate(data_loader):
 
         images = images.to(device)
