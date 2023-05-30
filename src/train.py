@@ -12,7 +12,7 @@ from discriminator import Discriminator
 
 
 Z_DIM = 100 #dimension of the noise vector
-NUM_EPOCHS  = 50 
+NUM_EPOCHS  = 200 
 LEARNING_RATE = 2e-4 #Adam learning rate
 FEATURES_G = 64
 FEATURES_D = 64
@@ -20,13 +20,14 @@ FEATURES_D = 64
 #Binary Cross Entropy Loss function
 adversarial_loss = nn.BCELoss()
 
-def weights_init_normal(m):
-    classname = m.__class__.__name__
-    if classname.find("Conv") != -1:
-        torch.nn.init.normal_(m.weight.data, 0.0, 0.02)
-    elif classname.find("BatchNorm2d") != -1:
-        torch.nn.init.normal_(m.weight.data, 1.0, 0.02)
-        torch.nn.init.constant_(m.bias.data, 0.0)
+#function to initialize weights
+def initialize_weights(model):
+    for module in model.modules():
+        if isinstance(module, nn.Conv2d) or isinstance(module, nn.ConvTranspose2d):
+            nn.init.normal_(module.weight.data, mean=0.0, std=0.02)
+        elif isinstance(module, nn.BatchNorm2d):
+            nn.init.normal_(module.weight.data, mean=1.0, std=0.02)
+            nn.init.constant_(module.bias.data, 0.0)
     
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -35,8 +36,8 @@ generator = Generator(Z_DIM,CHANNELS_IMG,FEATURES_G).to(device)
 discriminator = Discriminator(CHANNELS_IMG,FEATURES_D).to(device)
 
 #Initialize weights
-generator.apply(weights_init_normal)
-discriminator.apply(weights_init_normal)
+initialize_weights(generator)
+initialize_weights(discriminator)
 
 #Initialize optimizers for Generator and Discriminator
 optimizer_g = optim.Adam(generator.parameters(),lr=LEARNING_RATE,betas=(0.5,0.999))
@@ -78,16 +79,16 @@ for epoch in range(NUM_EPOCHS+1):
         d_loss = real_loss + fake_loss #discriminator loss
         d_loss.backward()
         optimizer_d.step()
-
-        if epoch != 0 and (epoch == 10 or epoch % 50 == 0):
-            path_to_save = f"/content/DCGAN-for-face-images-generation/results/{epoch} epochs"
-            try:
-              os.makedirs(path_to_save)
-            except FileExistsError:
-              pass
-            for i, image_tensor in enumerate(g_images[-25::]):
-                save_image(image_tensor, os.path.join(path_to_save, f'image_{i}.png'))
-            save_image(g_images[:25], os.path.join(path_to_save, 'grid.png'), nrow=8, normalize=True)
+        with torch.nograd():
+            if epoch != 0 and (epoch == 10 or epoch % 50 == 0):
+                path_to_save = f"/content/DCGAN-for-face-images-generation/results/{epoch} epochs"
+                try:
+                    os.makedirs(path_to_save)
+                except FileExistsError:
+                    pass
+                for i, image_tensor in enumerate(g_images[-25::]):
+                    save_image(image_tensor, os.path.join(path_to_save, f'image_{i}.png'))
+                save_image(g_images[:25], os.path.join(path_to_save, 'grid.png'), nrow=8, normalize=True)
             
 
 
