@@ -11,7 +11,7 @@ class Generator(nn.Module):
         activation function to output pixel values in the range [-1, 1].
 
         Attributes:
-            gen (torch.nn.Module): The sequential container of all the layers in the generator.
+            gen(torch.nn.Module): The sequential container of all the layers in the generator.
 
         Args:
             z_dim (int): The dimension of the latent space vector (z).

@@ -29,7 +29,7 @@ class Discriminator(nn.Module):
             self.discriminator_block(features_d * 4, features_d * 8, 4, 2, 1), 
             # Output: N x 1 x 1 x 1
             nn.Conv2d(features_d * 8, 1, kernel_size=4, stride=2, padding=0),
-            nn.Sigmoid(),
+             nn.Sigmoid(),
         )
 
     def discriminator_block(self, in_channels, out_channels, kernel_size, stride, padding):
@@ -42,7 +42,7 @@ class Discriminator(nn.Module):
                 padding,
                 bias=False,
             ),
-            nn.InstanceNorm2d(out_channels, affine=True),
+            nn.BatchNorm2d(out_channels),
             nn.LeakyReLU(0.2),
         )
 
